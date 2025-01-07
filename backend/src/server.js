@@ -159,3 +159,24 @@ wss.on("connection", (ws) => {
 });
 
 console.log("Servidor WebSocket rodando na porta 8080");
+// Atualiza o contador e envia para todos os clientes
+contadorViagens += 1;  // Incrementa o contador de viagens
+fs.writeFileSync("contador.json", JSON.stringify({ contadorViagens }));
+
+// Envia a atualização para todos os clientes conectados
+const updateMessage = JSON.stringify({
+  type: "update",
+  carreta: data.carreta,
+  status: data.status,
+  statusClass: statusClasses[data.status]?.class || "SemStatus",
+  statusColor: statusClasses[data.status]?.color || "#808080",
+  history: carretaHistory[data.carreta],
+  area: data.area,
+  contadorViagens  // Inclui o contador na mensagem de atualização
+});
+
+wss.clients.forEach((client) => {
+  if (client.readyState === client.OPEN) {
+    client.send(updateMessage);
+  }
+});
