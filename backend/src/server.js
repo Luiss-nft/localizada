@@ -15,6 +15,9 @@ let carretaStatus = {
   156009: "Sem status" 
 };
 
+// Inicializa o contador de viagens
+let contadorViagens = 0;
+
 // Mapeamento para as classes de status e suas cores
 const statusClasses = {
   "Sem status": { class: "SemStatus", color: "#808080" }, // Cinza
@@ -32,8 +35,8 @@ const wss = new WebSocketServer({ port: 8080 });
 wss.on("connection", (ws) => {
   console.log("Novo cliente conectado.");
 
-  // Envia o histórico inicial e o status ao cliente
-  ws.send(JSON.stringify({ type: "init", history: carretaHistory, statuses: carretaStatus }));
+  // Envia o histórico inicial, o status e o contador ao cliente
+  ws.send(JSON.stringify({ type: "init", history: carretaHistory, statuses: carretaStatus, contadorViagens }));
 
   ws.on("message", (message) => {
     try {
@@ -42,7 +45,7 @@ wss.on("connection", (ws) => {
       if (data.type === "update") {
         const timestamp = new Date().toLocaleString();
 
-        // Atualiza o histórico da carreta com base na área (carregamento ou descarregamento)
+        // Atualiza o histórico da carreta
         if (!carretaHistory[data.carreta]) {
           carretaHistory[data.carreta] = [];
         }
@@ -55,6 +58,9 @@ wss.on("connection", (ws) => {
         // Atualiza o status
         carretaStatus[data.carreta] = data.status;
 
+        // Incrementa o contador de viagens
+        contadorViagens += 1;
+
         // Salva o histórico no arquivo
         fs.writeFileSync("historico.json", JSON.stringify(carretaHistory, null, 2));
 
@@ -66,10 +72,11 @@ wss.on("connection", (ws) => {
                 type: "update",
                 carreta: data.carreta,
                 status: data.status,
-                statusClass: statusClasses[data.status]?.class || "SemStatus", // Envia a classe do status
-                statusColor: statusClasses[data.status]?.color || "#808080", // Envia a cor do status
+                statusClass: statusClasses[data.status]?.class || "SemStatus",
+                statusColor: statusClasses[data.status]?.color || "#808080",
                 history: carretaHistory[data.carreta],
-                area: data.area, // Especificando a área (carregamento ou descarregamento)
+                area: data.area,
+                contadorViagens // Envia o contador atualizado
               })
             );
           }
@@ -94,7 +101,8 @@ wss.on("connection", (ws) => {
             client.send(
               JSON.stringify({
                 type: "clearHistory",
-                statuses: carretaStatus, // Envia o novo status de todas as carretas
+                statuses: carretaStatus,
+                contadorViagens // Envia o contador atualizado
               })
             );
           }
