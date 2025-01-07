@@ -203,115 +203,114 @@ button:active {
   <div id="carretas"></div>
 
   <script>
-    const carretas = [1401, 1402, 1418, 1417, 156009];
-    const ws = new WebSocket("wss://localizada-1.onrender.com");
+    
+  const carretas = [1401, 1402, 1418, 1417, 156009];
+  const ws = new WebSocket("wss://localizada-1.onrender.com");
 
-    ws.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === "init") {
-        carretas.forEach((carreta) => {
-          document.getElementById("carretas").innerHTML += `
-            <div id="carreta-${carreta}" class="carreta">
-              <h2>Carreta ${carreta}</h2>
-              <div class="buttons-container">
-                <button onclick="updateStatus(${carreta}, 'Entrada')">
-                  <i class="bi bi-arrow-right-circle"></i> Entrada
-                </button>
-                <button onclick="updateStatus(${carreta}, 'Saída')">
-                  <i class="bi bi-arrow-left-circle"></i> Saída
-                </button>
-                <button class="clear-button" onclick="clearHistory(${carreta})">
-                  <i class="bi bi-trash"></i>
-                </button>
-              </div>
-              <div id="historico-${carreta}" class="historico"></div>
-            </div>
-          `;
+  ws.onmessage = (event) => {
+    const data = JSON.parse(event.data);
 
-          // Carrega o histórico do localStorage para cada carreta
-          const currentHistory = JSON.parse(localStorage.getItem("historicoCarregamento") || "{}");
-          if (currentHistory[carreta]) {
-            const historico = document.getElementById(`historico-${carreta}`);
-            currentHistory[carreta].forEach(entry => {
-              historico.innerHTML += `<p><strong>${entry.action}:</strong> ${entry.time}</p>`;
-            });
-          }
-        });
+    // Atualiza contador de viagens
+    if (data.type === "update") {
+      const contadorElement = document.getElementById('viagensCounter');
+      if (contadorElement) {
+        contadorElement.textContent = data.contadorViagens;
       }
-    };
+    }
 
-    function updateStatus(carreta, type) {
-      const status = type === "Entrada" ? "Aguardando Carregamento" : "Em Percurso para o CAMPO";
-      const time = new Date().toLocaleTimeString();
-      const action = { action: type, time: time };
+    // Atualiza quando o contador for resetado
+    if (data.type === "resetContador") {
+      const contadorElement = document.getElementById('viagensCounter');
+      if (contadorElement) {
+        contadorElement.textContent = data.contadorViagens;
+      }
+    }
 
-      // Envia a atualização ao servidor
-      ws.send(JSON.stringify({
-        type: "update", 
-        carreta, 
-        status, 
-        action, 
-        area: "carregamento" 
-      }));
+    if (data.type === "init") {
+      carretas.forEach((carreta) => {
+        document.getElementById("carretas").innerHTML += `
+          <div id="carreta-${carreta}" class="carreta">
+            <h2>Carreta ${carreta}</h2>
+            <div class="buttons-container">
+              <button onclick="updateStatus(${carreta}, 'Entrada')">
+                <i class="bi bi-arrow-right-circle"></i> Entrada
+              </button>
+              <button onclick="updateStatus(${carreta}, 'Saída')">
+                <i class="bi bi-arrow-left-circle"></i> Saída
+              </button>
+              <button class="clear-button" onclick="clearHistory(${carreta})">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+            <div id="historico-${carreta}" class="historico"></div>
+          </div>
+        `;
+      });
+    }
+  };
 
-      // Atualiza o histórico local na página
-      const historico = document.getElementById(`historico-${carreta}`);
-      historico.innerHTML += `<p><strong>${action.action}:</strong> ${action.time}</p>`;
+  function updateStatus(carreta, type) {
+    const status = type === "Entrada" ? "Aguardando Carregamento" : "Em Percurso para o CAMPO";
+    const time = new Date().toLocaleTimeString();
+    const action = { action: type, time: time };
 
-      // Atualiza o histórico no LocalStorage apenas para esta página (carregamento)
+    ws.send(JSON.stringify({
+      type: "update", 
+      carreta, 
+      status, 
+      action, 
+      area: "carregamento" 
+    }));
+
+    const historico = document.getElementById(`historico-${carreta}`);
+    historico.innerHTML += `<p><strong>${action.action}:</strong> ${action.time}</p>`;
+
+    const currentHistory = JSON.parse(localStorage.getItem("historicoCarregamento") || "{}");
+    if (!currentHistory[carreta]) currentHistory[carreta] = [];
+    currentHistory[carreta].push(action);
+    localStorage.setItem("historicoCarregamento", JSON.stringify(currentHistory));
+
+    let viagensCount = parseInt(localStorage.getItem('contadorViagens')) || 0;
+    viagensCount += 1;
+    localStorage.setItem('contadorViagens', viagensCount);
+
+    // Envia a atualização para o servidor com o contador incrementado
+    ws.send(JSON.stringify({
+      type: "update", 
+      carreta, 
+      status, 
+      action, 
+      area: "carregamento",
+      contadorViagens: viagensCount
+    }));
+  }
+
+  function clearHistory(carreta) {
+    if (confirm("Você tem certeza que deseja limpar o histórico?")) {
       const currentHistory = JSON.parse(localStorage.getItem("historicoCarregamento") || "{}");
-      if (!currentHistory[carreta]) currentHistory[carreta] = [];
-      currentHistory[carreta].push(action);
+      currentHistory[carreta] = [];
       localStorage.setItem("historicoCarregamento", JSON.stringify(currentHistory));
 
-      // Incrementa o contador de viagens
-      let viagensCount = parseInt(localStorage.getItem('contadorViagens')) || 0;
-      viagensCount += 1;
-      localStorage.setItem('contadorViagens', viagensCount);
-      // Atualiza o contador na página inicial, se estiver aberta
-      window.dispatchEvent(new StorageEvent('storage', { key: 'contadorViagens', newValue: viagensCount }));
-    }
-
-    function clearHistory(carreta) {
-      if (confirm("Você tem certeza que deseja limpar o histórico?")) {
-        // Limpa o histórico no LocalStorage
-        const currentHistory = JSON.parse(localStorage.getItem("historicoCarregamento") || "{}");
-        currentHistory[carreta] = []; // Limpa o histórico da carreta
-        localStorage.setItem("historicoCarregamento", JSON.stringify(currentHistory));
-
-        // Atualiza o histórico na página
-        const historico = document.getElementById(`historico-${carreta}`);
-        historico.innerHTML = ""; // Limpa a exibição de histórico
-
-        // Envia a limpeza ao servidor
-        ws.send(JSON.stringify({
-          type: "clearHistory",
-          carreta,
-          area: "carregamento"
-        }));
-      
-        const ws = new WebSocket("wss://localizada-1.onrender.com");
-
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-
-  // Se for uma atualização, atualiza o contador de viagens
-  if (data.type === "update") {
-    const contadorElement = document.getElementById('viagensCounter');
-    if (contadorElement) {
-      contadorElement.textContent = data.contadorViagens;
+      const historico = document.getElementById(`historico-${carreta}`);
+      historico.innerHTML = "";
+      ws.send(JSON.stringify({
+        type: "clearHistory",
+        carreta,
+        area: "carregamento"
+      }));
     }
   }
 
-  // Outras condições de recebimento de mensagem
-  if (data.type === "init") {
-    // Inicialização do estado (como já está no seu código atual)
-  }
-};
-
-      
-      }
+  // Função para reiniciar o contador
+  document.getElementById('finalizarButton').addEventListener('click', () => {
+    if (confirm("Você tem certeza que deseja reiniciar o contador de viagens?")) {
+      ws.send(JSON.stringify({
+        type: "resetContador"
+      }));
     }
+  });
+
+
   </script>
 
 </body>
