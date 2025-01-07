@@ -65,8 +65,10 @@ letter-spacing: 5px;
 .calculos,
 .relatorios,
 .controle {
-    height: 150px;
-    width: 150px;
+    height: 125px;
+    width: 94px;
+    margin-left: 11px;
+    margin-top: 15px;
    
 }
 
