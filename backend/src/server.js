@@ -15,8 +15,10 @@ let carretaStatus = {
   156009: "Sem status" 
 };
 
-// Inicializa o contador de viagens
-let contadorViagens = 0;
+// Carrega o contador de viagens do arquivo, ou inicia em 0
+let contadorViagens = fs.existsSync("contador.json")
+  ? JSON.parse(fs.readFileSync("contador.json")).contadorViagens
+  : 0;
 
 // Mapeamento para as classes de status e suas cores
 const statusClasses = {
@@ -63,6 +65,9 @@ wss.on("connection", (ws) => {
 
         // Salva o histórico no arquivo
         fs.writeFileSync("historico.json", JSON.stringify(carretaHistory, null, 2));
+
+        // Salva o contador no arquivo
+        fs.writeFileSync("contador.json", JSON.stringify({ contadorViagens }));
 
         // Envia a atualização para todos os clientes conectados
         wss.clients.forEach((client) => {
