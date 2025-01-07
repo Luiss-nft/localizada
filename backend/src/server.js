@@ -20,18 +20,16 @@ let contadorViagens = fs.existsSync("contador.json")
   ? JSON.parse(fs.readFileSync("contador.json")).contadorViagens
   : 0;
 
-// Mapeamento para as classes de status e suas cores
 const statusClasses = {
-  "Sem status": { class: "SemStatus", color: "#808080" }, // Cinza
-  "Em Percurso para o Campo": { class: "EmPercursoparaocampo", color: "#00FF00" }, // Verde
-  "Aguardando Carregamento": { class: "AguardandoCarregamento", color: "#FFA500" }, // Laranja
-  "Aguardando Descarregamento": { class: "AguardandoDescarregamento", color: "#0000FF" }, // Azul
-  "Caminho para o Poço": { class: "CaminhoparaPoco", color: "#FFFF00" }, // Amarelo
-  "Concluído": { class: "Concluido", color: "#008000" }, // Verde escuro
-  "Cancelado": { class: "Cancelado", color: "#FF0000" } // Vermelho
+  "Sem status": { class: "SemStatus", color: "#808080" },
+  "Em Percurso para o Campo": { class: "EmPercursoparaocampo", color: "#00FF00" },
+  "Aguardando Carregamento": { class: "AguardandoCarregamento", color: "#FFA500" },
+  "Aguardando Descarregamento": { class: "AguardandoDescarregamento", color: "#0000FF" },
+  "Caminho para o Poço": { class: "CaminhoparaPoco", color: "#FFFF00" },
+  "Concluído": { class: "Concluido", color: "#008000" },
+  "Cancelado": { class: "Cancelado", color: "#FF0000" }
 };
 
-// Inicia o WebSocket Server
 const wss = new WebSocketServer({ port: 8080 });
 
 wss.on("connection", (ws) => {
@@ -76,12 +74,16 @@ wss.on("connection", (ws) => {
           statusColor: statusClasses[data.status]?.color || "#808080",
           history: carretaHistory[data.carreta],
           area: data.area,
-          contadorViagens // Envia o contador atualizado
+          contadorViagens
         });
+
+        console.log("Enviando mensagem de atualização para todos os clientes:", updateMessage);
 
         wss.clients.forEach((client) => {
           if (client.readyState === client.OPEN) {
             client.send(updateMessage);
+          } else {
+            console.log("Cliente não está pronto para receber mensagens.");
           }
         });
 
@@ -89,21 +91,20 @@ wss.on("connection", (ws) => {
       }
 
       if (data.type === "clearHistory") {
-        // Limpa o histórico para todas as carretas
         for (let carreta in carretaHistory) {
           carretaHistory[carreta] = [];
           carretaStatus[carreta] = 'Sem status';
         }
 
-        // Salva a limpeza no arquivo
         fs.writeFileSync("historico.json", JSON.stringify(carretaHistory, null, 2));
 
-        // Envia a limpeza para todos os clientes conectados
         const clearMessage = JSON.stringify({
           type: "clearHistory",
           statuses: carretaStatus,
-          contadorViagens // Envia o contador atualizado
+          contadorViagens
         });
+
+        console.log("Enviando mensagem de limpeza para todos os clientes.");
 
         wss.clients.forEach((client) => {
           if (client.readyState === client.OPEN) {
