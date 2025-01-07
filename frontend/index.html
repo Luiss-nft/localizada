@@ -174,24 +174,7 @@
               updateViagensCounter(parseInt(event.newValue));
           }
       });
-
-      // Estabelecendo a conexão com o WebSocket
-const ws = new WebSocket("wss://localizada-1.onrender.com");
-
-ws.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-
-  // Atualiza o contador de viagens quando o servidor enviar uma atualização
-  if (data.type === "update") {
-    const contadorElement = document.getElementById('viagensCounter');
-    if (contadorElement) {
-      contadorElement.textContent = data.contadorViagens;
-    }
-  }
-
-  // Outra lógica de recebimento de mensagens...
-};
-
+      
   </script>
 
  
