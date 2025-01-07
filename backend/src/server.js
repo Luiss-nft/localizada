@@ -63,27 +63,25 @@ wss.on("connection", (ws) => {
         // Incrementa o contador de viagens
         contadorViagens += 1;
 
-        // Salva o histórico no arquivo
+        // Salva o histórico e o contador no arquivo
         fs.writeFileSync("historico.json", JSON.stringify(carretaHistory, null, 2));
-
-        // Salva o contador no arquivo
         fs.writeFileSync("contador.json", JSON.stringify({ contadorViagens }));
 
         // Envia a atualização para todos os clientes conectados
+        const updateMessage = JSON.stringify({
+          type: "update",
+          carreta: data.carreta,
+          status: data.status,
+          statusClass: statusClasses[data.status]?.class || "SemStatus",
+          statusColor: statusClasses[data.status]?.color || "#808080",
+          history: carretaHistory[data.carreta],
+          area: data.area,
+          contadorViagens // Envia o contador atualizado
+        });
+
         wss.clients.forEach((client) => {
-          if (client.readyState === ws.OPEN) {
-            client.send(
-              JSON.stringify({
-                type: "update",
-                carreta: data.carreta,
-                status: data.status,
-                statusClass: statusClasses[data.status]?.class || "SemStatus",
-                statusColor: statusClasses[data.status]?.color || "#808080",
-                history: carretaHistory[data.carreta],
-                area: data.area,
-                contadorViagens // Envia o contador atualizado
-              })
-            );
+          if (client.readyState === client.OPEN) {
+            client.send(updateMessage);
           }
         });
 
@@ -101,15 +99,15 @@ wss.on("connection", (ws) => {
         fs.writeFileSync("historico.json", JSON.stringify(carretaHistory, null, 2));
 
         // Envia a limpeza para todos os clientes conectados
+        const clearMessage = JSON.stringify({
+          type: "clearHistory",
+          statuses: carretaStatus,
+          contadorViagens // Envia o contador atualizado
+        });
+
         wss.clients.forEach((client) => {
-          if (client.readyState === ws.OPEN) {
-            client.send(
-              JSON.stringify({
-                type: "clearHistory",
-                statuses: carretaStatus,
-                contadorViagens // Envia o contador atualizado
-              })
-            );
+          if (client.readyState === client.OPEN) {
+            client.send(clearMessage);
           }
         });
 
