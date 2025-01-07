@@ -289,6 +289,27 @@ button:active {
           carreta,
           area: "carregamento"
         }));
+      
+        const ws = new WebSocket("wss://localizada-1.onrender.com");
+
+ws.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+
+  // Se for uma atualização, atualiza o contador de viagens
+  if (data.type === "update") {
+    const contadorElement = document.getElementById('viagensCounter');
+    if (contadorElement) {
+      contadorElement.textContent = data.contadorViagens;
+    }
+  }
+
+  // Outras condições de recebimento de mensagem
+  if (data.type === "init") {
+    // Inicialização do estado (como já está no seu código atual)
+  }
+};
+
+      
       }
     }
   </script>
