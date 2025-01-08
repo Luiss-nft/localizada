@@ -207,7 +207,7 @@ button:active {
 
   <script>
     const carretas = [1401, 1402, 1418, 1417, 156009];
-    const ws = new WebSocket("https://localizada-app-3sz4.onrender.com");
+    const ws = new WebSocket("wss://localizada-1.onrender.com");
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
