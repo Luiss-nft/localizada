@@ -120,7 +120,7 @@
 <body>
 
   <nav>
-    <h1>Status das Carretas</h1> <!-- Adicionada a palavra "poopis" -->
+    <h1>Status das Carretas - poopis</h1> <!-- Adicionada a palavra "poopis" -->
   </nav>
 
   <main>
@@ -128,7 +128,7 @@
   </main>
 
   <script>
-    const ws = new WebSocket("https://localizada-app.onrender.com");
+    const ws = new WebSocket("wss://localizada-1.onrender.com");
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
