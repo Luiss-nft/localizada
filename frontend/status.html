@@ -128,7 +128,7 @@
   </main>
 
   <script>
-    const ws = new WebSocket("wss://localizada-1.onrender.com");
+    const ws = new WebSocket("https://localizada-app.onrender.com");
 
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
