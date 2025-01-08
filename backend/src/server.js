@@ -6,7 +6,7 @@ let carretaHistory = fs.existsSync("historico.json")
   ? JSON.parse(fs.readFileSync("historico.json"))
   : { 1401: [], 1402: [], 1418: [], 1417: [], 156009: [] };
 
-// Inicializa o status das carreta
+// Inicializa o status das carret
 let carretaStatus = { 
   1401: "Sem status", 
   1402: "Sem status", 
